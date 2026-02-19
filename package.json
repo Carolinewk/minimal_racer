@@ -1,0 +1,13 @@
+{
+  "name": "vibimon",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "immutable": "^4.3.5",
+    "vibinet": "^0.1.1"
+  },
+  "scripts": {
+    "build": "bun build src/Client.ts --outfile public/main.js --target browser && rm -rf public/assets && cp -R assets public/assets",
+    "server": "bun run build && bun run src/Server.ts"
+  }
+}

@@ -1,0 +1,396 @@
+Your goal is to reduce this codebase's *complexity* without changing its
+functionality and without altering any observable behavior at all.
+
+Here, complexity is defined as the codebase size after minifying all TypeScript
+files, by removing comments and spaces (*without* changing variable names; long
+names do count towards higher complexity). 
+
+To reduce complexity, you're allowed apply 5 techniques:
+
+1. **Reduction by Abstraction**
+
+Look for repetitive or structurally similar code in multiple locations and
+extract the shared logic into a single reusable function. Use parameters or
+configuration to handle the variations between each specific use case.
+
+For example, consider:
+
+```typescript
+function render_error_box(msg: string): string {
+  return "<div class='box-error'><p>" + msg + "</p></div>";
+}
+
+function render_warn_box(msg: string): string {
+  return "<div class='box-warn'><p>" + msg + "</p></div>";
+}
+
+function render_ok_box(msg: string): string {
+  return "<div class='box-ok'><p>" + msg + "</p></div>";
+}
+```
+
+This can be *abstracted* as:
+
+```typescript
+function render_box(kind: string, msg: string): string {
+  return "<div class='box-" + kind + "'><p>" + msg + "</p></div>";
+}
+
+function render_error_box(msg: string): string {
+  return render_box("error", msg);
+}
+
+function render_warn_box(msg: string): string {
+  return render_box("warn", msg);
+}
+
+function render_ok_box(msg: string): string {
+  return render_box("ok", msg);
+}
+```
+
+But even this can be *further abstracted* as:
+
+```typescript
+function html_tag(tag: string, txt: string): string {
+  return "<" + tag + ">" + txt + "</" + tag + ">";
+}
+
+function render_box(kind: string, msg: string): string {
+  return html_tag("div class='box-" + kind + "'", html_tag("p", msg));
+}
+
+function render_error_box(msg: string): string {
+  return render_box("error", msg);
+}
+
+function render_warn_box(msg: string): string {
+  return render_box("warn", msg);
+}
+
+function render_ok_box(msg: string): string {
+  return render_box("ok", msg);
+}
+```
+
+Identifying Reduction by Abstraction opportunities can be really hard sometimes
+(particularly when the "repetitive pattern" emerges between two far apart parts
+of the codebase), but it is always a major net win, not only because it reduces
+complexity, but because it helps us find new concepts, such as 'html_tag'. You
+should put enormous effort into finding good abstractions.
+
+2. **Reduction by Simplification:**
+
+Look for overly complex logic that can be expressed more directly using cleaner
+algorithms or simplified control flow. This includes removing unnecessary
+intermediate variables, consolidating redundant conditionals, and replacing
+convoluted logic with straightforward equivalents.
+
+For example, consider:
+
+```typescript
+function sum_positive(numbers: number[]): number {
+  let filtered: number[] = [];
+  for (let i = 0; i < numbers.length; i++) {
+    if (numbers[i] > 0) {
+      filtered.push(numbers[i]);
+    }
+  }
+  let total = 0;
+  for (let i = 0; i < filtered.length; i++) {
+    total += filtered[i];
+  }
+  return total;
+}
+```
+
+This can be *simplified* as:
+
+```typescript
+function sum_positive(numbers: number[]): number {
+  let total = 0;
+  for (let i = 0; i < numbers.length; i++) {
+    if (numbers[i] > 0) {
+      total += numbers[i];
+    }
+  }
+  return total;
+}
+```
+
+3. **Reduction by Elimination:**
+
+Look for dead code, unused variables, redundant checks, or unnecessary
+operations that can be safely removed without changing behavior. This includes
+removing unreachable branches, eliminating variables that are written but never
+read, and deleting code that has no effect on the output.
+
+For example, consider:
+
+```typescript
+function calculate_discount(price: number, is_member: boolean): number {
+  let base_discount = 0;
+  let bonus = 0;
+  if (is_member) {
+    base_discount = price * 0.1;
+  }
+  if (price > 100) {
+    bonus = 5;
+  }
+  let unused_total = price + bonus;
+  return price - base_discount;
+}
+```
+
+This can be *eliminated* to:
+
+```typescript
+function calculate_discount(price: number, is_member: boolean): number {
+  let base_discount = 0;
+  if (is_member) {
+    base_discount = price * 0.1;
+  }
+  return price - base_discount;
+}
+```
+
+Here, both `bonus` and `unused_total` were computed but never used in the final
+result, so they can be safely removed.
+
+4. **Reduction by Concise Naming:**
+
+Look for overly verbose identifiers that can be replaced with shorter names that
+are *equally clear* in context. This does NOT mean abbreviating everything or
+using cryptic names; it means choosing naturally concise alternatives when the
+meaning remains obvious. In general, you should always come up with the shortest
+name that conveys the same meaning, without being cryptic.
+
+For example, consider:
+```typescript
+// Verbose
+function create_rectangle(width: number, height: number, position_x: number, position_y: number) {
+  return { width: width, height: height, position_x: position_x, position_y: position_y };
+}
+
+// Concise (equally clear in geometric context)
+function new_rect(w: number, h: number, x: number, y: number) {
+  return { w: w, h: h, x: x, y: y };
+}
+```
+
+```typescript
+// Verbose
+function get_string_length(input_string: string): number {
+  return input_string.length;
+}
+
+// Concise (str is universally understood)
+function str_len(str: string): number {
+  return str.length;
+}
+```
+
+```typescript
+// Verbose
+function find_element_index(elements: Item[], target_element: Item): number {
+  for (let index = 0; index < elements.length; index++) {
+    if (elements[index] === target_element) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+// Concise (idx, el, arr are standard in programming)
+function find_idx(arr: Item[], el: Item): number {
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] === el) {
+      return i;
+    }
+  }
+  return -1;
+}
+```
+
+5. **Reduction by Inlining:**
+
+Look for tiny helper functions or variables that are used only once and add
+unnecessary indirection, or that are so short that inlining them would decrease
+complexity, not the other way around. When a wrapper does nothing meaningful
+beyond calling another function or when an intermediate variable just holds a
+value briefly before immediate use, inlining can reduce complexity.
+
+For example, consider:
+
+```typescript
+function double(x: number): number {
+  return x * 2;
+}
+
+function process_value(input: number): number {
+  let doubled = double(input);
+  let result = doubled + 10;
+  return result;
+}
+```
+
+This can be *inlined* to:
+
+```typescript
+function process_value(input: number): number {
+  return input * 2 + 10;
+}
+```
+
+Here, `double` was a trivial one-liner used only once, and the intermediate
+variables `doubled` and `result` added no clarity. Inlining them removes
+indirection and reduces complexity.
+
+Note: Inlining is the opposite of abstraction. Use it only when the helper
+provides no reuse benefit and the inlined version is equally or more readable.
+
+IMPORTANT CAVEATS:
+
+When attempting to reduce complexity, do NOT minify or uglify your code. The
+goal is to reduce complexity by finding truly better abstractions or simpler
+algorithms, NOT by compacting the codebase artificially. That means:
+
+- Do NOT rename variables to shorter names
+
+```typescript
+// Bad
+let u = get_user();
+
+// Good
+let user = get_user();
+```
+
+- Do NOT put multiple statements on a single line
+
+```typescript
+// Bad
+x = 1; y = 2; z = 3;
+
+// Good
+x = 1;
+y = 2;
+z = 3;
+```
+
+- Do NOT collapse if-then-else into a single line
+
+```typescript
+// Bad
+if (x) { y = 1; } else { y = 2; }
+
+// Good
+if (x) {
+  y = 1;
+} else {
+  y = 2;
+}
+```
+
+- Do NOT use ternary operators where if-then-else is more readable
+
+```typescript
+// Bad
+result = is_valid ? process_data(input) : handle_error(input);
+
+// Good
+if (is_valid) {
+  result = process_data(input);
+} else {
+  result = handle_error(input);
+}
+```
+
+- Do NOT abuse short-circuit evaluation for control flow
+
+```typescript
+// Bad
+condition && do_something();
+
+// Good
+if (condition) {
+  do_something();
+}
+```
+
+- Do NOT use comma operators to combine expressions
+
+```typescript
+// Bad
+return (count++, items.push(x), count);
+
+// Good
+count++;
+items.push(x);
+return count;
+```
+
+- Do NOT remove underscores from variable names
+
+```typescript
+// Bad
+let userId = 123;
+
+// Good
+let user_id = 123;
+```
+
+Use underscore_case for normal variable names, and CamelCase for type names.
+
+- Do NOT remove comments or documentation in any way
+
+- Do NOT remove spaces; in fact, ADD spaces for better readability
+
+```typescript
+// Bad (cramped, hard to scan)
+const config={host:"localhost",port:8080,timeout:5000,retries:3};
+
+// Good (aligned, easy to scan)
+const config = {
+  host    : "localhost",
+  port    : 8080,
+  timeout : 5000,
+  retries : 3
+};
+```
+
+```typescript
+// Bad (no alignment)
+let x = 1;
+let width = 100;
+let y = 2;
+let height = 200;
+
+// Good (grouped and aligned for clarity)
+let x      = 1;
+let y      = 2;
+let width  = 100;
+let height = 200;
+```
+
+And so on. These and any other changes that artificially reduce complexity by
+syntactical tricks will be deemed harmful.
+
+- Do NOT use functional array methods like `.map`, `.filter`
+
+While these ARE good abstractions, they increase cognitive burden. Moreover, we
+should only abstract patterns that emerge from the *user* codebase and domain,
+NOT from the language itself. These functions are abstractions of native loops,
+so we should just stick to the native version instead. For example:
+
+```typescript
+// Bad (using functional methods)
+let doubled = numbers.filter(n => n > 0).map(n => n * 2);
+
+// Good (using native loops)
+let doubled: number[] = [];
+for (let i = 0; i < numbers.length; i++) {
+  if (numbers[i] > 0) {
+    doubled.push(numbers[i] * 2);
+  }
+}
+```

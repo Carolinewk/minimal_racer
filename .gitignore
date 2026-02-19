@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Bun lockfile
+bun.lock
+
+# Build output
+public/main.js
+public/assets/
+
+# OS junk
+.DS_Store
+**/.DS_Store
+
+# Local backups
+assets_backup/
+
+# Editor
+*.swp
+*.swo
+*.swn
+*.sublime-workspace
+*.sublime-project
+
+# Logs
+*.log
+
+# Misc archives
+*.zip
+Prompt.md

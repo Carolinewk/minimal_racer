@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VIBIMON TEST-0</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DotGothic16"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hud-row">
+        <div class="hud-box">
+          <canvas
+            id="players-canvas"
+            class="hud-canvas"
+            width="160"
+            height="22"
+            aria-label="Connected players"
+          ></canvas>
+        </div>
+        <div class="hud-box">
+          <canvas
+            id="timer-canvas"
+            class="hud-canvas"
+            width="160"
+            height="22"
+            aria-label="Match timer"
+          ></canvas>
+        </div>
+      </header>
+      <div class="play-area">
+        <div class="frame">
+          <canvas
+            id="game"
+            width="160"
+            height="144"
+            aria-label="Vibimon game screen"
+          ></canvas>
+          <textarea
+            id="terminal"
+            class="terminal"
+            rows="18"
+            cols="40"
+            wrap="off"
+            spellcheck="false"
+            readonly
+            aria-label="Vibimon raw terminal"
+          ></textarea>
+          <div id="loading-screen" class="loading-screen" aria-live="polite">
+            Loading<span id="loading-dots">.</span>
+          </div>
+        </div>
+      </div>
+      <p class="hint">WASD move · J/K (A/B) soon · L start soon</p>
+      <div class="toggle-row">
+        <label class="toggle">
+          <input id="raw-toggle" type="checkbox" />
+          Raw terminal
+        </label>
+      </div>
+    </main>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
